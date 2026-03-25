@@ -6,15 +6,14 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
-# Install system dependencies for Pillow and other packages
+# Install system dependencies for Pillow (image processing)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
     liblcms2-dev \
     libopenjp2-7-dev \
-    libharfbuzz0b \
-    libwebp6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
@@ -24,7 +23,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY . .
