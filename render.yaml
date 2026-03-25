@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: college-canteen
+    env: python
+    plan: free
+    branch: main
+    buildCommand: |
+      apt-get update && \
+      apt-get install -y libjpeg-dev zlib1g-dev libfreetype6-dev liblcms2-dev tcl8.6-dev tk8.6-dev && \
+      pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true

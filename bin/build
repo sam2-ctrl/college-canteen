@@ -1,0 +1,20 @@
+#!/bin/bash
+# This script runs before pip install to ensure system dependencies are available
+set -e
+
+echo "Installing system dependencies for Pillow and other packages..."
+
+# Update package lists
+apt-get update
+
+# Install dependencies for Pillow (image processing)
+apt-get install -y \
+  libjpeg-dev \
+  zlib1g-dev \
+  libfreetype6-dev \
+  liblcms2-dev \
+  libopenjp2-7-dev \
+  libharfbuzz0b \
+  libwebp6
+
+echo "System dependencies installed successfully!"
