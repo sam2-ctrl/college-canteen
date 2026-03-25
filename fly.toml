@@ -1,0 +1,42 @@
+# Fly.io configuration for College Canteen
+app = "college-canteen"
+primary_region = "iad"  # US East (change if needed)
+
+[build]
+  builder = "paketobuildpacks"
+
+[env]
+  FLASK_ENV = "production"
+  PYTHONUNBUFFERED = "true"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 5000
+  processes = ["app"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 100
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+[[services]]
+  internal_port = 8081
+  processes = ["app"]
+  protocol = "tcp"
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 100
+
+  [[services.ports]]
+    port = 8081
