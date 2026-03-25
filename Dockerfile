@@ -1,12 +1,13 @@
 # Use official Python runtime as base image
-FROM python:3.12.1-slim
+FROM python:3.13-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies for Pillow (image processing)
+# Install system dependencies for Pillow (image processing) and build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libjpeg-dev \
@@ -14,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     liblcms2-dev \
     libopenjp2-7-dev \
+    libharfbuzz0b \
+    libwebp7 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
