@@ -57,6 +57,11 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     SESSION_COOKIE_SECURE = True
+    
+    # Use SQLite in production (can be replaced with PostgreSQL)
+    # For production with PostgreSQL, uncomment:
+    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///canteen.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///canteen.db'
 
 
 config = {
