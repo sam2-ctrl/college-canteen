@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Razorpay Checkout - College Canteen{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-4 text-center">Complete Payment with Razorpay</h1>
+
+            <!-- Order Summary -->
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Order #{{ order.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Items:</h6>
+                        {% for item in order.order_items %}
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ item.food_item.name }} x{{ item.quantity }}</span>
+                                <span>₹{{ "%.2f"|format(item.get_subtotal()) }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total Amount:</strong>
+                        <strong class="text-success">₹{{ "%.2f"|format(order.total_amount) }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Razorpay Payment Widget -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-lock"></i> Pay Now</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <p class="text-muted">Click the button below to proceed with payment</p>
+                        <button id="rzp-btn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-credit-card"></i> Pay ₹{{ "%.2f"|format(order.total_amount) }}
+                        </button>
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i> <strong>Accepted:</strong> All credit/debit cards, UPI, Wallets, NetBanking
+                    </div>
+
+                    <a href="{{ url_for('main.payment', order_id=order.id) }}" class="btn btn-outline-secondary mt-3">
+                        ← Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay JS SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-btn').addEventListener('click', function() {
+    const options = {
+        key: '{{ razorpay_key_id }}',
+        amount: {{ razorpay_order['amount'] }},
+        currency: 'INR',
+        name: 'College Canteen',
+        description: 'Order #{{ order.id }}',
+        order_id: '{{ razorpay_order["id"] }}',
+        handler: function(response) {
+            // Payment successful
+            verifyPayment(response);
+        },
+        prefill: {
+            name: '{{ current_user.full_name }}',
+            email: '{{ current_user.email }}',
+            contact: '{{ current_user.phone }}'
+        },
+        theme: {
+            color: '#667eea'
+        }
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+});
+
+function verifyPayment(response) {
+    // Show loading
+    document.getElementById('rzp-btn').disabled = true;
+    document.getElementById('rzp-btn').innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Verifying...';
+
+    fetch('{{ url_for("main.verify_payment", order_id=order.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show success message
+            showAlert('success', data.message);
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '{{ url_for("main.order_details", order_id=order.id) }}';
+            }, 2000);
+        } else {
+            // Show error message
+            showAlert('danger', data.message);
+            document.getElementById('rzp-btn').disabled = false;
+            document.getElementById('rzp-btn').innerHTML = '<i class="fas fa-credit-card"></i> Pay ₹{{ "%.2f"|format(order.total_amount) }}';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred. Please try again.');
+        document.getElementById('rzp-btn').disabled = false;
+        document.getElementById('rzp-btn').innerHTML = '<i class="fas fa-credit-card"></i> Pay ₹{{ "%.2f"|format(order.total_amount) }}';
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+}
+
+// Handle payment modal close
+document.addEventListener('DOMContentLoaded', function() {
+    // If user closes the modal without paying
+    window.addEventListener('paytmWindowClosed', function() {
+        console.log('Payment modal closed');
+    });
+});
+</script>
+{% endblock %}

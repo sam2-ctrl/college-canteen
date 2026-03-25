@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - College Canteen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">My Orders</h1>
+
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">Order #{{ order.id }}</h5>
+                                    <p class="text-muted mb-1">{{ order.created_at.strftime('%d %b %Y at %H:%M') }}</p>
+                                    <p class="mb-1">
+                                        <strong>Items:</strong> {{ order.get_total_items() }} |
+                                        <strong>Total:</strong> ₹{{ "%.2f"|format(order.total_amount) }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <span class="badge {% if order.status == 'pending' %}bg-warning{% elif order.status == 'confirmed' %}bg-info{% elif order.status == 'ready' %}bg-success{% elif order.status == 'completed' %}bg-success{% endif %}">
+                                            {{ order.status.upper() }}
+                                        </span>
+                                        <span class="badge {% if order.payment_status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            Payment: {{ order.payment_status.upper() }}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="{{ url_for('main.order_details', order_id=order.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You haven't placed any orders yet. <a href="{{ url_for('main.menu') }}">Start ordering now!</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
